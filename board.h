@@ -21,12 +21,12 @@ typedef enum {
 
 typedef struct {
   Piece *arr;
-  bool white_to_move;
+  bool whiteToMove;
   bool castle_K;
   bool castle_Q;
   bool castle_k;
   bool castle_q;
-  char *enpassant; // this is a horrible way to store this but I don't feel
+  char *enPassant; // this is a horrible way to store this but I don't feel
                    // like making it better right now since I'm not gonna be
                    // implementing en passant for a while lol
   size_t halfmove;
@@ -34,23 +34,24 @@ typedef struct {
 } board;
 
 typedef struct {
-  size_t start_rank;
-  size_t start_file;
-  size_t end_rank;
-  size_t end_file;
-  bool is_capture;
+  size_t startRank;
+  size_t startFile;
+  size_t endRank;
+  size_t endFile;
+  bool isCapture;
   Piece victim; // only matters if is_capture is true
 } move;
 
-board *board_new();
-void board_free(board *B);
-void board_update_location(board *B, Piece P, size_t rank, size_t file);
-Piece board_get_location(board *B, size_t rank, size_t file);
-void piece_print(Piece P);
-void board_print(board *B);
-move *move_new();
-void board_move(board *B, move *M);
-void board_undo(board *B, move *M);
-void board_draw(board *B, int screenWidth, int screenHeight);
+board *boardNew();
+void boardFree(board *B);
+void boardUpdateLocation(board *B, Piece P, size_t rank, size_t file);
+Piece boardGetLocation(board *B, size_t rank, size_t file);
+void piecePrint(Piece P);
+void boardPrint(board *B);
+move *moveNew();
+void boardMove(board *B, move *M);
+void boardUndo(board *B, move *M);
+void boardDraw(board *B, int left, int top, int squareSize);
+void moveFree(move *M);
 
 #endif

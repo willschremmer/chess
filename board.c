@@ -8,7 +8,7 @@
 
 char *FEN_DEFAULT = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-board *board_new(char *fen) {
+board *boardNew(char *fen) {
   if (fen == NULL) {
     fen = FEN_DEFAULT;
   }
@@ -23,40 +23,40 @@ board *board_new(char *fen) {
     char curr = fen[i];
     switch (curr) {
     case 'P':
-      board_update_location(B, WHITE_PAWN, rank, file);
+      boardUpdateLocation(B, WHITE_PAWN, rank, file);
       break;
     case 'B':
-      board_update_location(B, WHITE_BISHOP, rank, file);
+      boardUpdateLocation(B, WHITE_BISHOP, rank, file);
       break;
     case 'N':
-      board_update_location(B, WHITE_KNIGHT, rank, file);
+      boardUpdateLocation(B, WHITE_KNIGHT, rank, file);
       break;
     case 'R':
-      board_update_location(B, WHITE_ROOK, rank, file);
+      boardUpdateLocation(B, WHITE_ROOK, rank, file);
       break;
     case 'Q':
-      board_update_location(B, WHITE_QUEEN, rank, file);
+      boardUpdateLocation(B, WHITE_QUEEN, rank, file);
       break;
     case 'K':
-      board_update_location(B, WHITE_KING, rank, file);
+      boardUpdateLocation(B, WHITE_KING, rank, file);
       break;
     case 'p':
-      board_update_location(B, BLACK_PAWN, rank, file);
+      boardUpdateLocation(B, BLACK_PAWN, rank, file);
       break;
     case 'b':
-      board_update_location(B, BLACK_BISHOP, rank, file);
+      boardUpdateLocation(B, BLACK_BISHOP, rank, file);
       break;
     case 'n':
-      board_update_location(B, BLACK_KNIGHT, rank, file);
+      boardUpdateLocation(B, BLACK_KNIGHT, rank, file);
       break;
     case 'r':
-      board_update_location(B, BLACK_ROOK, rank, file);
+      boardUpdateLocation(B, BLACK_ROOK, rank, file);
       break;
     case 'q':
-      board_update_location(B, BLACK_QUEEN, rank, file);
+      boardUpdateLocation(B, BLACK_QUEEN, rank, file);
       break;
     case 'k':
-      board_update_location(B, BLACK_KING, rank, file);
+      boardUpdateLocation(B, BLACK_KING, rank, file);
       break;
     case '/':
       file = 0; // set this to 0 since it's gonna be += 1 later lol
@@ -76,25 +76,25 @@ board *board_new(char *fen) {
     file += 1;
   }
 
-  B->white_to_move = true;
+  B->whiteToMove = true;
   B->castle_K = true;
   B->castle_Q = true;
   B->castle_k = true;
   B->castle_q = true;
-  B->enpassant = NULL;
+  B->enPassant = NULL;
   B->halfmove = 0;
   B->fullmove = 1;
   return B;
 }
 
-bool is_piece(Piece P) {
+bool isPiece(Piece P) {
   return 0 <= P && P < 13;
 }
 
-bool is_board(board *B) {
+bool isBoard(board *B) {
   if (B != NULL && B->arr != NULL) {
     for (size_t i = 0; i < 64; i++) {
-      if (!is_piece(B->arr[i])) {
+      if (!isPiece(B->arr[i])) {
         return false;
       }
     }
@@ -104,40 +104,44 @@ bool is_board(board *B) {
   }
 }
 
-bool is_move(move *M) {
-  return 1 <= M->start_rank && M->start_rank <= 8
-      && 1 <= M->start_file && M->start_file <= 8
-      && 1 <= M->end_rank && M->end_rank <= 8
-      && 1 <= M->end_file && M->end_file <= 8
-      && (!M->is_capture || is_piece(M->victim));
+bool isMove(move *M) {
+  return 1 <= M->startRank && M->startRank <= 8
+      && 1 <= M->startFile && M->startFile <= 8
+      && 1 <= M->endRank && M->endRank <= 8
+      && 1 <= M->endFile && M->endFile <= 8
+      && (!M->isCapture || isPiece(M->victim));
 }
 
-move *move_new(size_t start_rank, size_t start_file, size_t end_rank,
-               size_t end_file, board *B) {
-  bool is_capture = false;
-  Piece victim = board_get_location(B, end_rank, end_file);
+move *moveNew(size_t startRank, size_t startFile, size_t endRank,
+               size_t endFile, board *B) {
+  bool isCapture = false;
+  Piece victim = boardGetLocation(B, endRank, endFile);
   if (victim != EMPTY) {
-    is_capture = true;
+    isCapture = true;
   }
   move *M = malloc(sizeof(move));
-  M->start_rank = start_rank;
-  M->start_file = start_file;
-  M->end_rank = end_rank;
-  M->end_file = end_file;
-  M->is_capture = is_capture;
-  if (is_capture) {
+  M->startRank = startRank;
+  M->startFile = startFile;
+  M->endRank = endRank;
+  M->endFile = endFile;
+  M->isCapture = isCapture;
+  if (isCapture) {
     M->victim = victim;
   }
-  assert(is_move(M));
+  assert(isMove(M));
   return M;
 }
 
-void board_free(board *B) {
+void boardFree(board *B) {
   free(B->arr);
   free(B);
 }
 
-size_t index_from_rank_file(size_t rank, size_t file) {
+void moveFree(move *M) {
+  free(M);
+}
+
+size_t indexFromRankFile(size_t rank, size_t file) {
   assert(1 <= rank && rank <= 8);
   assert(1 <= file && file <= 8);
 
@@ -147,39 +151,39 @@ size_t index_from_rank_file(size_t rank, size_t file) {
   return row*8 + col;
 }
 
-size_t rank_from_index(size_t index) {
+size_t rankFromIndex(size_t index) {
   assert(0 <= index && index < 64);
   
   return index / 8;
 }
 
-size_t file_from_index(size_t index) {
+size_t fileFromIndex(size_t index) {
   assert(0 <= index && index < 64);
   
   return index % 8;
 }
 
-Piece board_get_location(board *B, size_t rank, size_t file) {
-  assert(is_board(B));
+Piece boardGetLocation(board *B, size_t rank, size_t file) {
+  assert(isBoard(B));
 
-  size_t index = index_from_rank_file(rank, file);
+  size_t index = indexFromRankFile(rank, file);
 
-  assert(is_piece(B->arr[index]));
+  assert(isPiece(B->arr[index]));
   return B->arr[index];
 }
 
-void board_update_location(board *B, Piece piece, size_t rank, size_t file) {
-  assert(is_board(B));
-  assert(is_piece(piece));
+void boardUpdateLocation(board *B, Piece piece, size_t rank, size_t file) {
+  assert(isBoard(B));
+  assert(isPiece(piece));
 
-  size_t index = index_from_rank_file(rank, file);
+  size_t index = indexFromRankFile(rank, file);
   B->arr[index] = piece;
 
-  assert(is_board(B));
+  assert(isBoard(B));
 }
 
-char piece_char(Piece P) {
-  assert(is_piece(P));
+char pieceChar(Piece P) {
+  assert(isPiece(P));
   switch (P) {
   case EMPTY:
     return '-';
@@ -227,62 +231,19 @@ char piece_char(Piece P) {
   }
 }
 
-void piece_print(Piece P) {
-  assert(is_piece(P));
-  switch (P) {
-  case EMPTY:
-    printf("-");
-    break;
-  case WHITE_PAWN:
-    printf("P");
-    break;
-  case WHITE_BISHOP:
-    printf("B");
-    break;
-  case WHITE_KNIGHT:
-    printf("N");
-    break;
-  case WHITE_ROOK:
-    printf("R");
-    break;
-  case WHITE_QUEEN:
-    printf("Q");
-    break;
-  case WHITE_KING:
-    printf("K");
-    break;
-  case BLACK_PAWN:
-    printf("p");
-    break;
-  case BLACK_BISHOP:
-    printf("b");
-    break;
-  case BLACK_KNIGHT:
-    printf("n");
-    break;
-  case BLACK_ROOK:
-    printf("r");
-    break;
-  case BLACK_QUEEN:
-    printf("q");
-    break;
-  case BLACK_KING:
-    printf("k");
-    break;
-  default:
-    printf("?");
-    assert(false);
-    break;
-  }
+void piecePrint(Piece P) {
+  assert(isPiece(P));
+
+  printf("%c", pieceChar(P));
 }
 
-void board_print(board *B) {
-  assert(is_board(B));
+void boardPrint(board *B) {
+  assert(isBoard(B));
   printf("+---------------+\n");
   for (size_t rank = 8; rank > 0; rank--) {
     printf("|");
     for (size_t file = 1; file < 9; file++) {
-      piece_print(board_get_location(B, rank, file));
+      piecePrint(boardGetLocation(B, rank, file));
       if (file != 8) printf(" ");
     }
     printf("|\n");
@@ -290,20 +251,14 @@ void board_print(board *B) {
   printf("+---------------+\n");
 }
 
-void board_draw(board *B, int screenWidth, int screenHeight) {
-  assert(is_board(B));
-  assert(screenWidth > 0);
-  assert(screenHeight > 0);
-
-  const int board_padding = 20;
-  const int board_left_offset = (screenWidth - screenHeight) / 2;
-  const int board_size = screenHeight - 2*board_padding;
-  const int square_size = board_size/8;
+void boardDraw(board *B, int left, int top, int squareSize) {
+  assert(isBoard(B));
+  assert(squareSize > 0);
 
   for (size_t file = 1; file < 9; file++) {
     for (size_t rank = 1; rank < 9; rank++) {
-      int x = (file-1) * square_size + board_left_offset + board_padding;
-      int y = (8-rank) * square_size + board_padding;
+      int x = (file-1) * squareSize + left;
+      int y = (8-rank) * squareSize + top;
 
       Color fill;
 
@@ -313,44 +268,47 @@ void board_draw(board *B, int screenWidth, int screenHeight) {
         fill = BROWN;
       }
 
-      DrawRectangle(x, y, square_size, square_size, fill);
-      char *piece_name = malloc(2*sizeof(char));
-      piece_name[0] = piece_char(board_get_location(B, rank, file));
-      piece_name[1] = '\0';
-      DrawText(piece_name, x + square_size/4, y + square_size/4, square_size/2, BLACK);
-      free(piece_name);
+      DrawRectangle(x, y, squareSize, squareSize, fill);
+
+      if (boardGetLocation(B, rank, file) != EMPTY) {
+        char *pieceName = malloc(2*sizeof(char));
+        pieceName[0] = pieceChar(boardGetLocation(B, rank, file));
+        pieceName[1] = '\0';
+        DrawText(pieceName, x + squareSize/4, y + squareSize/4, squareSize/2, BLACK);
+        free(pieceName);
+      }
     }
   }
 }
 
-void board_move(board *B, move *M) {
-  assert(is_board(B));
-  assert(is_move(M));
+void boardMove(board *B, move *M) {
+  assert(isBoard(B));
+  assert(isMove(M));
 
-  Piece mover = board_get_location(B, M->start_rank, M->start_file);
+  Piece mover = boardGetLocation(B, M->startRank, M->startFile);
 
-  board_update_location(B, EMPTY, M->start_rank, M->start_file);
-  board_update_location(B, mover, M->end_rank, M->end_file);
+  boardUpdateLocation(B, EMPTY, M->startRank, M->startFile);
+  boardUpdateLocation(B, mover, M->endRank, M->endFile);
 
-  assert(is_board(B));
+  assert(isBoard(B));
 } 
 
-void board_undo(board *B, move *M) {
-  assert(is_board(B));
-  assert(is_move(M));
-  assert(board_get_location(B, M->start_rank, M->start_file) == EMPTY);
+void boardUndo(board *B, move *M) {
+  assert(isBoard(B));
+  assert(isMove(M));
+  assert(boardGetLocation(B, M->startRank, M->startFile) == EMPTY);
 
-  Piece mover = board_get_location(B, M->end_rank, M->end_file);
-  Piece old_piece;
+  Piece mover = boardGetLocation(B, M->endRank, M->endFile);
+  Piece oldPiece;
 
-  if (M->is_capture) {
-    old_piece = M->victim;
+  if (M->isCapture) {
+    oldPiece = M->victim;
   } else {
-    old_piece = EMPTY;
+    oldPiece = EMPTY;
   }
   
-  board_update_location(B, old_piece, M->end_rank, M->end_file);
-  board_update_location(B, mover, M->start_rank, M->start_file);
+  boardUpdateLocation(B, oldPiece, M->endRank, M->endFile);
+  boardUpdateLocation(B, mover, M->startRank, M->startFile);
 
-  assert(is_board(B));
+  assert(isBoard(B));
 }
