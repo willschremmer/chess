@@ -103,6 +103,34 @@ bool is_board(board *B) {
   }
 }
 
+bool is_move(move *M) {
+  return 1 <= M->start_rank && M->start_rank <= 8
+      && 1 <= M->start_file && M->start_file <= 8
+      && 1 <= M->end_rank && M->end_rank <= 8
+      && 1 <= M->end_file && M->end_file <= 8
+      && (!M->is_capture || is_piece(M->victim));
+}
+
+move *move_new(size_t start_rank, size_t start_file, size_t end_rank,
+               size_t end_file, board *B) {
+  bool is_capture = false;
+  Piece victim = board_get_location(B, end_rank, end_file);
+  if (victim != EMPTY) {
+    is_capture = true;
+  }
+  move *M = malloc(sizeof(move));
+  M->start_rank = start_rank;
+  M->start_file = start_file;
+  M->end_rank = end_rank;
+  M->end_file = end_file;
+  M->is_capture = is_capture;
+  if (is_capture) {
+    M->victim = victim;
+  }
+  assert(is_move(M));
+  return M;
+}
+
 void board_free(board *B) {
   free(B->arr);
   free(B);
@@ -200,12 +228,46 @@ void piece_print(Piece P) {
 
 void board_print(board *B) {
   assert(is_board(B));
-
-  for (size_t rank = 1; rank < 9; rank++) {
+  printf("+---------------+\n");
+  for (size_t rank = 8; rank > 0; rank--) {
+    printf("|");
     for (size_t file = 1; file < 9; file++) {
       piece_print(board_get_location(B, rank, file));
-      printf(" ");
+      if (file != 8) printf(" ");
     }
-    printf("\n");
+    printf("|\n");
   }
+  printf("+---------------+\n");
+}
+
+void board_move(board *B, move *M) {
+  assert(is_board(B));
+  assert(is_move(M));
+
+  Piece mover = board_get_location(B, M->start_rank, M->start_file);
+
+  board_update_location(B, EMPTY, M->start_rank, M->start_file);
+  board_update_location(B, mover, M->end_rank, M->end_file);
+
+  assert(is_board(B));
+} 
+
+void board_undo(board *B, move *M) {
+  assert(is_board(B));
+  assert(is_move(M));
+  assert(board_get_location(B, M->start_rank, M->start_file) == EMPTY);
+
+  Piece mover = board_get_location(B, M->end_rank, M->end_file);
+  Piece old_piece;
+
+  if (M->is_capture) {
+    old_piece = M->victim;
+  } else {
+    old_piece = EMPTY;
+  }
+  
+  board_update_location(B, old_piece, M->end_rank, M->end_file);
+  board_update_location(B, mover, M->start_rank, M->start_file);
+
+  assert(is_board(B));
 }

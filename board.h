@@ -33,11 +33,23 @@ typedef struct {
   size_t fullmove;
 } board;
 
+typedef struct {
+  size_t start_rank;
+  size_t start_file;
+  size_t end_rank;
+  size_t end_file;
+  bool is_capture;
+  Piece victim; // only matters if is_capture is true
+} move;
+
 board *board_new();
 void board_free(board *B);
 void board_update_location(board *B, Piece P, size_t rank, size_t file);
 Piece board_get_location(board *B, size_t rank, size_t file);
 void piece_print(Piece P);
 void board_print(board *B);
+move *move_new();
+void board_move(board *B, move *M);
+void board_undo(board *B, move *M);
 
 #endif
