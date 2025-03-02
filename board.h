@@ -51,5 +51,6 @@ void board_print(board *B);
 move *move_new();
 void board_move(board *B, move *M);
 void board_undo(board *B, move *M);
+void board_draw(board *B, int screenWidth, int screenHeight);
 
 #endif

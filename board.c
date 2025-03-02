@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "board.h"
+#include "raylib.h"
 
 char *FEN_DEFAULT = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -177,6 +178,55 @@ void board_update_location(board *B, Piece piece, size_t rank, size_t file) {
   assert(is_board(B));
 }
 
+char piece_char(Piece P) {
+  assert(is_piece(P));
+  switch (P) {
+  case EMPTY:
+    return '-';
+    break;
+  case WHITE_PAWN:
+    return 'P';
+    break;
+  case WHITE_BISHOP:
+    return 'B';
+    break;
+  case WHITE_KNIGHT:
+    return 'N';
+    break;
+  case WHITE_ROOK:
+    return 'R';
+    break;
+  case WHITE_QUEEN:
+    return 'Q';
+    break;
+  case WHITE_KING:
+    return 'K';
+    break;
+  case BLACK_PAWN:
+    return 'p';
+    break;
+  case BLACK_BISHOP:
+    return 'b';
+    break;
+  case BLACK_KNIGHT:
+    return 'n';
+    break;
+  case BLACK_ROOK:
+    return 'r';
+    break;
+  case BLACK_QUEEN:
+    return 'q';
+    break;
+  case BLACK_KING:
+    return 'k';
+    break;
+  default:
+    return '?';
+    assert(false);
+    break;
+  }
+}
+
 void piece_print(Piece P) {
   assert(is_piece(P));
   switch (P) {
@@ -238,6 +288,39 @@ void board_print(board *B) {
     printf("|\n");
   }
   printf("+---------------+\n");
+}
+
+void board_draw(board *B, int screenWidth, int screenHeight) {
+  assert(is_board(B));
+  assert(screenWidth > 0);
+  assert(screenHeight > 0);
+
+  const int board_padding = 20;
+  const int board_left_offset = (screenWidth - screenHeight) / 2;
+  const int board_size = screenHeight - 2*board_padding;
+  const int square_size = board_size/8;
+
+  for (size_t file = 1; file < 9; file++) {
+    for (size_t rank = 1; rank < 9; rank++) {
+      int x = (file-1) * square_size + board_left_offset + board_padding;
+      int y = (8-rank) * square_size + board_padding;
+
+      Color fill;
+
+      if ((file + rank) % 2 == 1) {
+        fill = BEIGE;
+      } else {
+        fill = BROWN;
+      }
+
+      DrawRectangle(x, y, square_size, square_size, fill);
+      char *piece_name = malloc(2*sizeof(char));
+      piece_name[0] = piece_char(board_get_location(B, rank, file));
+      piece_name[1] = '\0';
+      DrawText(piece_name, x + square_size/4, y + square_size/4, square_size/2, BLACK);
+      free(piece_name);
+    }
+  }
 }
 
 void board_move(board *B, move *M) {
