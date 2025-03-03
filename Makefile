@@ -1,8 +1,8 @@
 # Compiler and flags
 CC = gcc
-CFLAGS = -I/usr/local/include         # Include directory for Raylib headers
-LDFLAGS = -L/usr/local/lib            # Library directory for Raylib
-LIBS = -lraylib -lm                   # Link against Raylib library
+CFLAGS = -I/usr/local/include -Wall -g `pkg-config --cflags glib-2.0`
+LDFLAGS = -L/usr/local/lib `pkg-config --libs glib-2.0`
+LIBS = -lraylib -lm 
 
 # Source files and target executable
 SRC = main.c board.c                  # Replace with your source file(s)

@@ -91,6 +91,34 @@ bool isPiece(Piece P) {
   return 0 <= P && P < 13;
 }
 
+bool isMove(move *M) {
+  return 1 <= M->startRank && M->startRank <= 8
+      && 1 <= M->startFile && M->startFile <= 8
+      && 1 <= M->endRank && M->endRank <= 8
+      && 1 <= M->endFile && M->endFile <= 8
+      && (!M->isCapture || isPiece(M->victim));
+}
+
+// this is so poorly written sorry lol
+bool isMoveBank(moveBank *X) {
+  if (X != NULL) {
+    if (X->piece == EMPTY) {
+      return X->arr != NULL;
+    } else {
+      if (X->arr == NULL) {
+        return false;
+      } else {
+        for (int i = 0; i < X->len; i++) {
+          if (!isMove(X->arr[i])) return false;
+        }
+        return true;
+      }
+    }
+  } else {
+    return false;
+  }
+}
+
 bool isBoard(board *B) {
   if (B != NULL && B->arr != NULL) {
     for (size_t i = 0; i < 64; i++) {
@@ -102,14 +130,6 @@ bool isBoard(board *B) {
   } else {
     return false;
   }
-}
-
-bool isMove(move *M) {
-  return 1 <= M->startRank && M->startRank <= 8
-      && 1 <= M->startFile && M->startFile <= 8
-      && 1 <= M->endRank && M->endRank <= 8
-      && 1 <= M->endFile && M->endFile <= 8
-      && (!M->isCapture || isPiece(M->victim));
 }
 
 move *moveNew(size_t startRank, size_t startFile, size_t endRank,
@@ -311,4 +331,44 @@ void boardUndo(board *B, move *M) {
   boardUpdateLocation(B, mover, M->startRank, M->startFile);
 
   assert(isBoard(B));
+}
+
+moveBank *moveBankNew(Piece piece) {
+  moveBank *X = malloc(sizeof(moveBank));
+  X->piece = piece;
+  X->len = 0;
+  X->arr = malloc(64*sizeof(move*));
+
+  return X;
+}
+
+void moveBankAdd(moveBank *X, move *M) {
+  X->arr[X->len] = M;
+  X->len++;
+}
+
+moveBank *getMoves(board *B, size_t rank, size_t file) {
+  assert(1 <= rank && rank <= 8);
+  assert(1 <= file && file <= 8);
+
+  Piece mover = boardGetLocation(B, rank, file);
+  moveBank *bank = moveBankNew(mover);
+
+  switch (mover) {
+  case EMPTY:
+    assert(false); // never should be getting moves of empty square
+    break;
+  case WHITE_PAWN:
+    Piece front = boardGetLocation(B, rank + 1, file);
+    if (front == EMPTY) {
+      move *stepForward = moveNew(rank, file, rank+1, file, B);
+      moveBankAdd(bank, stepForward);
+    }
+    break;
+  default:
+    assert(false);
+    break;
+  }
+
+  return bank;
 }
