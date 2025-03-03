@@ -55,6 +55,14 @@ typedef struct { // TYPE: moveBank
 
 // FUNCTIONS
 // ----------------------------------------------------------------------------
+bool piecesSameColor(Piece P1, Piece P2);
+bool isLegalMove(board *B, move *M);
+bool moveBankContains(moveBank *X, move *M);
+bool moveEqual(move *M1, move *M2);
+void moveBankFree(moveBank *X);
+char pieceChar(Piece P);
+
+
 board *boardNew();
 /* REQUIRES: true
  * ENSURES: boardNew() != NULL
@@ -75,6 +83,22 @@ Piece boardGetLocation(board *B, size_t rank, size_t file);
 /* REQUIRES: B != NULL && 1 <= rank, file <= 8
  * ENSURES: returns the Piece at rank `rank` and file `file` in B
  */
+
+Piece pieceMakeWhite(Piece P);
+/* REQUIRES: true
+ * ENSURES: if P is black, turn it white
+ */
+
+bool pieceIsWhite(Piece P);
+/* REQUIRES: true
+ * ENSURES: return whether P is white
+ */
+
+bool pieceIsBlack(Piece P);
+/* REQUIRES: true
+ * ENSURES: return whether P is black
+ */
+
 
 void piecePrint(Piece P);
 /* REQUIRES: true

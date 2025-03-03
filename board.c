@@ -306,9 +306,11 @@ void boardMove(board *B, move *M) {
   assert(isMove(M));
 
   Piece mover = boardGetLocation(B, M->startRank, M->startFile);
+  assert(B->whiteToMove == pieceIsWhite(mover));
 
   boardUpdateLocation(B, EMPTY, M->startRank, M->startFile);
   boardUpdateLocation(B, mover, M->endRank, M->endFile);
+  B->whiteToMove = !B->whiteToMove;
 
   assert(isBoard(B));
 } 
@@ -329,6 +331,7 @@ void boardUndo(board *B, move *M) {
   
   boardUpdateLocation(B, oldPiece, M->endRank, M->endFile);
   boardUpdateLocation(B, mover, M->startRank, M->startFile);
+  B->whiteToMove = !B->whiteToMove;
 
   assert(isBoard(B));
 }
@@ -347,6 +350,27 @@ void moveBankAdd(moveBank *X, move *M) {
   X->len++;
 }
 
+Piece pieceMakeWhite(Piece P) {
+  if (P <= 6) return P;
+  return P - 6;
+}
+
+bool pieceIsWhite(Piece P) {
+  return 1 <= P && P <= 6;
+}
+
+bool pieceIsBlack(Piece P) {
+  return 7 <= P && P <= 12;
+}
+
+bool piecesSameColor(Piece P1, Piece P2) {
+  assert(P1 != EMPTY);
+  assert(P2 != EMPTY);
+
+  return (pieceIsWhite(P1) && pieceIsWhite(P2))
+      || (pieceIsBlack(P1) && pieceIsBlack(P2));
+}
+
 moveBank *getMoves(board *B, size_t rank, size_t file) {
   assert(1 <= rank && rank <= 8);
   assert(1 <= file && file <= 8);
@@ -354,15 +378,164 @@ moveBank *getMoves(board *B, size_t rank, size_t file) {
   Piece mover = boardGetLocation(B, rank, file);
   moveBank *bank = moveBankNew(mover);
 
-  switch (mover) {
+  switch (pieceMakeWhite(mover)) {
   case EMPTY:
     assert(false); // never should be getting moves of empty square
     break;
   case WHITE_PAWN:
-    Piece front = boardGetLocation(B, rank + 1, file);
+    int d;
+    int homeRank;
+    if (pieceIsWhite(mover)) {
+      d = 1;
+      homeRank = 2;
+    } else {
+      assert(pieceIsBlack(mover));
+      d = -1;
+      homeRank = 7;
+    }
+    Piece front = boardGetLocation(B, rank + d, file);
     if (front == EMPTY) {
-      move *stepForward = moveNew(rank, file, rank+1, file, B);
+      move *stepForward = moveNew(rank, file, rank + d, file, B);
       moveBankAdd(bank, stepForward);
+      if (rank == homeRank) {
+        Piece doubleFront = boardGetLocation(B, rank + 2*d, file);
+        if (doubleFront == EMPTY) {
+          move *stepTwo = moveNew(rank, file, rank + 2*d, file, B);
+          moveBankAdd(bank, stepTwo);
+        }
+      }
+    }
+    if (rank != 1) {
+      Piece leftDiag = boardGetLocation(B, rank + d, file - 1);
+      if (leftDiag != EMPTY && !piecesSameColor(mover, leftDiag)) {
+        move *captureLeft = moveNew(rank, file, rank + d, file - 1, B);
+        moveBankAdd(bank, captureLeft);
+      }
+    }
+    if (rank != 8) {
+      Piece rightDiag = boardGetLocation(B, rank + d, file + 1);
+      if (rightDiag != EMPTY && !piecesSameColor(mover, rightDiag)) {
+        move *captureRight = moveNew(rank, file, rank + d, file + 1, B);
+        moveBankAdd(bank, captureRight);
+      }
+    }
+    break;
+  case WHITE_KING:
+    for (int dRank = -1; dRank < 2; dRank++) {
+      for (int dFile = -1; dFile < 2; dFile++) {
+        if (dRank == 0 && dFile == 0) continue;
+        if (rank + dRank < 1 || rank + dRank > 8
+            || file + dFile < 1 || file + dFile > 8) {
+          continue;
+        }
+        Piece target = boardGetLocation(B, rank + dRank, file + dFile);
+        if (target == EMPTY || !piecesSameColor(mover, target)) {
+          move *goThere = moveNew(rank, file, rank + dRank, file + dFile, B);
+          moveBankAdd(bank, goThere);
+        }
+      }
+    }
+    break;
+  case WHITE_KNIGHT:
+    for (int negRank = -1; negRank < 2; negRank += 2) {
+      for (int negFile = -1; negFile < 2; negFile += 2) {
+        for (int swap = 0; swap < 2; swap++) {
+          int dRank = 1 * negRank;
+          int dFile = 2 * negFile;
+          if (swap) {
+            int dummy = dRank;
+            dRank = dFile;
+            dFile = dummy;
+          }
+          if (rank + dRank < 1 || rank + dRank > 8
+              || file + dFile < 1 || file + dFile > 8) {
+            continue;
+          }
+          Piece target = boardGetLocation(B, rank + dRank, file + dFile);
+          if (target == EMPTY || !piecesSameColor(mover, target)) {
+            move *goThere = moveNew(rank, file, rank + dRank, file + dFile, B);
+            moveBankAdd(bank, goThere);
+          }
+        }
+      }
+    }
+    break;
+  case WHITE_BISHOP:
+    for (int rankSign = -1; rankSign < 2; rankSign += 2) {
+      for (int fileSign = -1; fileSign < 2; fileSign += 2) {
+        int distance = 1;
+        while (true) {
+          int dRank = rankSign * distance;
+          int dFile = fileSign * distance;
+          if (rank + dRank < 1 || rank + dRank > 8
+              || file + dFile < 1 || file + dFile > 8) {
+            break;
+          }
+          Piece target = boardGetLocation(B, rank + dRank, file + dFile);
+          if (target == EMPTY) {
+            move *goThere = moveNew(rank, file, rank + dRank, file + dFile, B);
+            moveBankAdd(bank, goThere);
+            distance++;
+          } else if (!piecesSameColor(mover, target)) {
+            move *goThere = moveNew(rank, file, rank + dRank, file + dFile, B);
+            moveBankAdd(bank, goThere);
+            break;
+          } else break;
+        }
+      }
+    }
+    break;
+  case WHITE_ROOK:
+    for (int rankSign = -1; rankSign < 2; rankSign += 1) {
+      for (int fileSign = -1; fileSign < 2; fileSign += 1) {
+        if (rankSign != 0 && fileSign != 0) continue;
+        if (rankSign == 0 && fileSign == 0) continue;
+        int distance = 1;
+        while (true) {
+          int dRank = rankSign * distance;
+          int dFile = fileSign * distance;
+          if (rank + dRank < 1 || rank + dRank > 8
+              || file + dFile < 1 || file + dFile > 8) {
+            break;
+          }
+          Piece target = boardGetLocation(B, rank + dRank, file + dFile);
+          if (target == EMPTY) {
+            move *goThere = moveNew(rank, file, rank + dRank, file + dFile, B);
+            moveBankAdd(bank, goThere);
+            distance++;
+          } else if (!piecesSameColor(mover, target)) {
+            move *goThere = moveNew(rank, file, rank + dRank, file + dFile, B);
+            moveBankAdd(bank, goThere);
+            break;
+          } else break;
+        }
+      }
+    }
+    break;
+  case WHITE_QUEEN:
+    for (int rankSign = -1; rankSign < 2; rankSign += 1) {
+      for (int fileSign = -1; fileSign < 2; fileSign += 1) {
+        if (rankSign == 0 && fileSign == 0) continue;
+        int distance = 1;
+        while (true) {
+          int dRank = rankSign * distance;
+          int dFile = fileSign * distance;
+          if (rank + dRank < 1 || rank + dRank > 8
+              || file + dFile < 1 || file + dFile > 8) {
+            break;
+          }
+          Piece target = boardGetLocation(B, rank + dRank, file + dFile);
+          if (target == EMPTY) {
+            move *goThere = moveNew(rank, file, rank + dRank, file + dFile, B);
+            moveBankAdd(bank, goThere);
+            distance++;
+          } else if (!piecesSameColor(mover, target)) {
+            move *goThere = moveNew(rank, file, rank + dRank, file + dFile, B);
+            moveBankAdd(bank, goThere);
+            break;
+          } else break;
+        }
+      }
     }
     break;
   default:
@@ -371,4 +544,36 @@ moveBank *getMoves(board *B, size_t rank, size_t file) {
   }
 
   return bank;
+}
+
+bool moveEqual(move *M1, move *M2) {
+  return M1->startRank == M2->startRank
+      && M1->startFile == M2->startFile
+      && M1->endRank   == M2->endRank
+      && M1->endFile   == M2->endFile
+      && ((M1->isCapture && M2->isCapture
+           && M1->victim == M2->victim)
+          || (!M1->isCapture && !M2->isCapture));
+}
+
+bool moveBankContains(moveBank *X, move *M) {
+  for (int i = 0; i < X->len; i++) {
+    if (moveEqual(X->arr[i], M)) return true;
+  }
+  return false;
+}
+
+bool isLegalMove(board *B, move *M) {
+  moveBank *legalMoves = getMoves(B, M->startRank, M->startFile);
+  bool res = moveBankContains(legalMoves, M);
+  moveBankFree(legalMoves);
+  return res;
+}
+
+void moveBankFree(moveBank *X) {
+  for (int i = 0; i < X->len; i++) {
+    moveFree(X->arr[i]);
+  }
+  free(X->arr);
+  free(X);
 }
