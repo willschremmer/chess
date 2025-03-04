@@ -4,7 +4,6 @@
 #include <string.h>
 #include <ctype.h>
 #include "board.h"
-#include "raylib.h"
 
 char *FEN_DEFAULT = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -251,6 +250,57 @@ char pieceChar(Piece P) {
   }
 }
 
+char *pieceToFileName(Piece P) {
+  switch (P) {
+  case WHITE_PAWN:
+    return "icons/white_pawn.png";
+    break;
+  case WHITE_BISHOP:
+    return "icons/white_bishop.png";
+    break;
+  case WHITE_KNIGHT:
+    return "icons/white_knight.png";
+    break;
+  case WHITE_ROOK:
+    return "icons/white_rook.png";
+    break;
+  case WHITE_QUEEN:
+    return "icons/white_queen.png";
+    break;
+  case WHITE_KING:
+    return "icons/white_king.png";
+    break;
+  case BLACK_PAWN:
+    return "icons/black_pawn.png";
+    break;
+  case BLACK_BISHOP:
+    return "icons/black_bishop.png";
+    break;
+  case BLACK_KNIGHT:
+    return "icons/black_knight.png";
+    break;
+  case BLACK_ROOK:
+    return "icons/black_rook.png";
+    break;
+  case BLACK_QUEEN:
+    return "icons/black_queen.png";
+    break;
+  case BLACK_KING:
+    return "icons/black_king.png";
+    break;
+  default:
+    assert(false);
+    break;
+  }
+}
+
+void drawPiece(Piece P, int left, int top, int size) {
+  assert(isPiece(P));
+  Vector2 position = { left, top };
+  DrawTextureEx(pieceTextures[P], position, 0.0f, (float)size / 45.0f, WHITE);
+  size++; // suppress warnings lol
+}
+
 void piecePrint(Piece P) {
   assert(isPiece(P));
 
@@ -290,12 +340,16 @@ void boardDraw(board *B, int left, int top, int squareSize) {
 
       DrawRectangle(x, y, squareSize, squareSize, fill);
 
-      if (boardGetLocation(B, rank, file) != EMPTY) {
+      Piece piece = boardGetLocation(B, rank, file);
+      if (piece != EMPTY) {
+        drawPiece(piece, x, y, squareSize);
+/*
         char *pieceName = malloc(2*sizeof(char));
         pieceName[0] = pieceChar(boardGetLocation(B, rank, file));
         pieceName[1] = '\0';
         DrawText(pieceName, x + squareSize/4, y + squareSize/4, squareSize/2, BLACK);
         free(pieceName);
+   */
       }
     }
   }

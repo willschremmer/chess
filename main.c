@@ -2,6 +2,30 @@
 #include "board.h"
 #include "raylib.h"
 
+#define PIECE_COUNT 12
+
+Texture2D pieceTextures[PIECE_COUNT+1]; // because obviously let's 1-index
+
+void loadTextures() {
+  const char *textureFiles[PIECE_COUNT+1] = {
+    "DUMMY_VALUE",
+    "icons/white_pawn.png", "icons/white_bishop.png", "icons/white_knight.png", 
+    "icons/white_rook.png", "icons/white_queen.png", "icons/white_king.png",
+    "icons/black_pawn.png", "icons/black_bishop.png", "icons/black_knight.png",
+    "icons/black_rook.png", "icons/black_queen.png", "icons/black_king.png",
+  };
+
+  for (int i = 1; i < PIECE_COUNT+1; i++) {
+    pieceTextures[i] = LoadTexture(textureFiles[i]);
+  }
+}
+
+void unloadTextures() {
+  for (int i = 0; i < PIECE_COUNT; i++) {
+    UnloadTexture(pieceTextures[i]); 
+  }
+}
+
 int main() {
   const int screenWidth = 1600;
   const int screenHeight = 900;
@@ -25,6 +49,8 @@ int main() {
   SetTargetFPS(60);
 
   board *B = boardNew(NULL);
+
+  loadTextures();
 
   // main game loop
   while (!WindowShouldClose()) {
@@ -113,6 +139,7 @@ int main() {
   // --------------------------------------------------------------------------
   CloseWindow();
   boardFree(B);
+  unloadTextures();
   // --------------------------------------------------------------------------
 
   return 0;

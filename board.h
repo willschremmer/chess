@@ -2,6 +2,11 @@
 #define BOARD_H
 
 #include <stdbool.h>
+#include "raylib.h"
+
+#define PIECE_COUNT 12
+
+extern Texture2D pieceTextures[PIECE_COUNT+1];
 
 // TYPES
 // ----------------------------------------------------------------------------
@@ -61,6 +66,7 @@ bool moveBankContains(moveBank *X, move *M);
 bool moveEqual(move *M1, move *M2);
 void moveBankFree(moveBank *X);
 char pieceChar(Piece P);
+char *pieceToFileName(Piece P);
 
 
 board *boardNew();
