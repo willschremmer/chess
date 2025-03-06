@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include "board.h"
 #include "raylib.h"
 
@@ -52,6 +54,8 @@ int main() {
 
   loadTextures();
 
+  srand(time(NULL));
+
   // main game loop
   while (!WindowShouldClose()) {
     // update values
@@ -85,6 +89,16 @@ int main() {
         }
         moveFree(M);
       }
+    }
+
+    // make computer move
+    if (!B->whiteToMove) {
+      moveBank *allMoves = getPlayerMoves(B, false);
+      int i = rand() % (allMoves->len);
+      printf("Getting move %d (of %zu total)\n", i, allMoves->len);
+      printMove(allMoves->arr[i]);
+      boardMove(B, allMoves->arr[i]);
+      moveBankFree(allMoves, true);
     }
     // ------------------------------------------------------------------------
 

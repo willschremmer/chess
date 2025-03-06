@@ -54,7 +54,7 @@ typedef struct { // TYPE: moveBank
   size_t len; // length of arr
   move **arr; // this is not the final way i want to do this so this is just
               // hacked together and arr is just initialized to having 
-              // length 64 for every piece lolz
+              // length 4000 for every piece lolz
 } moveBank;
 // ============================================================================
 
@@ -64,10 +64,11 @@ bool piecesSameColor(Piece P1, Piece P2);
 bool isLegalMove(board *B, move *M);
 bool moveBankContains(moveBank *X, move *M);
 bool moveEqual(move *M1, move *M2);
-void moveBankFree(moveBank *X);
+void moveBankFree(moveBank *X, bool freeMoves);
 char pieceChar(Piece P);
 char *pieceToFileName(Piece P);
-
+moveBank *getPlayerMoves(board *B, bool isWhite);
+void printMove(move *M);
 
 board *boardNew();
 /* REQUIRES: true

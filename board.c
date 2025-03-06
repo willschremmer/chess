@@ -349,7 +349,7 @@ void boardDraw(board *B, int left, int top, int squareSize) {
         pieceName[1] = '\0';
         DrawText(pieceName, x + squareSize/4, y + squareSize/4, squareSize/2, BLACK);
         free(pieceName);
-   */
+*/
       }
     }
   }
@@ -394,7 +394,7 @@ moveBank *moveBankNew(Piece piece) {
   moveBank *X = malloc(sizeof(moveBank));
   X->piece = piece;
   X->len = 0;
-  X->arr = malloc(64*sizeof(move*));
+  X->arr = malloc(4000*sizeof(move*));
 
   return X;
 }
@@ -402,6 +402,11 @@ moveBank *moveBankNew(Piece piece) {
 void moveBankAdd(moveBank *X, move *M) {
   X->arr[X->len] = M;
   X->len++;
+}
+
+void printMove(move *M) {
+  printf("Moving from (%zu, %zu) to (%zu, %zu)\n", M->startRank, M->startFile,
+      M->endRank, M->endFile);
 }
 
 Piece pieceMakeWhite(Piece P) {
@@ -459,14 +464,14 @@ moveBank *getMoves(board *B, size_t rank, size_t file) {
         }
       }
     }
-    if (rank != 1) {
+    if (file != 1) {
       Piece leftDiag = boardGetLocation(B, rank + d, file - 1);
       if (leftDiag != EMPTY && !piecesSameColor(mover, leftDiag)) {
         move *captureLeft = moveNew(rank, file, rank + d, file - 1, B);
         moveBankAdd(bank, captureLeft);
       }
     }
-    if (rank != 8) {
+    if (file != 8) {
       Piece rightDiag = boardGetLocation(B, rank + d, file + 1);
       if (rightDiag != EMPTY && !piecesSameColor(mover, rightDiag)) {
         move *captureRight = moveNew(rank, file, rank + d, file + 1, B);
@@ -600,6 +605,27 @@ moveBank *getMoves(board *B, size_t rank, size_t file) {
   return bank;
 }
 
+moveBank *getPlayerMoves(board *B, bool isWhite) {
+  moveBank *result = moveBankNew(EMPTY);
+
+  for (int rank = 1; rank < 9; rank++) {
+    for (int file = 1; file < 9; file++) {
+      Piece curr = boardGetLocation(B, rank, file);
+      if (isWhite == pieceIsWhite(curr) && curr != EMPTY) {
+        moveBank *temp = getMoves(B, rank, file);
+        for (int i = 0; i < temp->len; i++) {
+          moveBankAdd(result, temp->arr[i]);
+printf("Adding move %zu: ", result->len);
+printMove(temp->arr[i]);
+        }
+        moveBankFree(temp, false);
+      }
+    }
+  }
+
+  return result;
+}
+
 bool moveEqual(move *M1, move *M2) {
   return M1->startRank == M2->startRank
       && M1->startFile == M2->startFile
@@ -620,13 +646,15 @@ bool moveBankContains(moveBank *X, move *M) {
 bool isLegalMove(board *B, move *M) {
   moveBank *legalMoves = getMoves(B, M->startRank, M->startFile);
   bool res = moveBankContains(legalMoves, M);
-  moveBankFree(legalMoves);
+  moveBankFree(legalMoves, true);
   return res;
 }
 
-void moveBankFree(moveBank *X) {
-  for (int i = 0; i < X->len; i++) {
-    moveFree(X->arr[i]);
+void moveBankFree(moveBank *X, bool freeMoves) {
+  if (freeMoves) {
+    for (int i = 0; i < X->len; i++) {
+      moveFree(X->arr[i]);
+    }
   }
   free(X->arr);
   free(X);
